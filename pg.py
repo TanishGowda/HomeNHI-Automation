@@ -31,6 +31,9 @@ PRIMARY_MOBILE = "9902978675"
 EXPECTED_RENT = "12000"
 EXPECTED_DEPOSIT = "20000"
 
+# PG Details Configuration
+DESCRIPTION = "Student Friendly PG, with all the essential amenities and an affordable rent, combined with the best cuisines, from all parts of the world."
+
 def wait_and_click(driver, by, locator, timeout=20):
     """Wait for an element to be clickable and then click it."""
     element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable((by, locator)))
@@ -265,6 +268,145 @@ def fill_room_details_page(driver):
     except Exception as e:
         print("✗ Could not find Save & Continue button:", str(e))
 
+def fill_locality_details_page(driver):
+    """Fill the locality details page - city and locality with autocomplete."""
+    print("Starting to fill locality details page...")
+    
+    # Wait for page transition
+    time.sleep(3)
+    
+    # City input - Type "Bangalore" and select first suggestion
+    try:
+        city_input = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@name='city']"))
+        )
+        city_input.clear()
+        city_input.send_keys("Bangalore")
+        time.sleep(1.5)  # Wait for autocomplete suggestions
+        
+        # Click first suggestion with JavaScript to avoid click interception
+        first_suggestion = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='pac-item'][1]"))
+        )
+        driver.execute_script("arguments[0].click();", first_suggestion)
+        print("✓ City selected: Bangalore")
+    except Exception as e:
+        print("✗ Could not fill City field:", str(e))
+    
+    # Locality input - Type "Bellandur" and select first suggestion
+    try:
+        locality_input = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@name='locality']"))
+        )
+        locality_input.clear()
+        locality_input.send_keys("Bellandur")
+        time.sleep(1.5)  # Wait for autocomplete suggestions
+        
+        # Click first suggestion with JavaScript to avoid click interception
+        first_suggestion = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, "//div[@class='pac-item'][1]"))
+        )
+        driver.execute_script("arguments[0].click();", first_suggestion)
+        print("✓ Locality selected: Bellandur")
+    except Exception as e:
+        print("✗ Could not fill Locality field:", str(e))
+    
+    # Click Save & Continue button
+    try:
+        # Try multiple selectors for Save & Continue button
+        save_button = None
+        selectors = [
+            "//button[contains(text(), 'Save & Continue')]",
+            "//button[contains(text(), 'Save &amp; Continue')]",
+            "//button[contains(@class, 'bg-red-600') and contains(text(), 'Save')]",
+            "//button[@type='button' and contains(text(), 'Save')]"
+        ]
+        
+        for selector in selectors:
+            try:
+                elements = driver.find_elements(By.XPATH, selector)
+                visible_elements = [el for el in elements if el.is_displayed()]
+                if visible_elements:
+                    save_button = visible_elements[0]
+                    break
+            except:
+                continue
+        
+        if save_button:
+            driver.execute_script("arguments[0].click();", save_button)
+            print("✓ Save & Continue button clicked - proceeding to next page")
+        else:
+            print("✗ Could not find Save & Continue button with any selector")
+    except Exception as e:
+        print("✗ Could not find Save & Continue button:", str(e))
+
+def fill_pg_details_page(driver):
+    """Fill the PG details page - rules and description."""
+    print("Starting to fill PG details page...")
+    
+    # Wait for page transition
+    time.sleep(3)
+    
+    # No Smoking checkbox
+    try:
+        no_smoking_checkbox = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@id='noSmoking']"))
+        )
+        driver.execute_script("arguments[0].click();", no_smoking_checkbox)
+        print("✓ No Smoking rule selected")
+    except Exception as e:
+        print("✗ Could not select No Smoking rule:", str(e))
+    
+    # No Drinking checkbox
+    try:
+        no_drinking_checkbox = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[@id='noDrinking']"))
+        )
+        driver.execute_script("arguments[0].click();", no_drinking_checkbox)
+        print("✓ No Drinking rule selected")
+    except Exception as e:
+        print("✗ Could not select No Drinking rule:", str(e))
+    
+    # Description textarea
+    try:
+        description_textarea = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//textarea[@id='description']"))
+        )
+        description_textarea.clear()
+        description_textarea.send_keys(DESCRIPTION)
+        print(f"✓ Description filled: {DESCRIPTION[:50]}...")
+    except Exception as e:
+        print("✗ Could not fill Description field:", str(e))
+    
+    # Click Save & Continue button
+    try:
+        # Try multiple selectors for Save & Continue button
+        save_button = None
+        selectors = [
+            "//button[contains(text(), 'Save & Continue')]",
+            "//button[contains(text(), 'Save &amp; Continue')]",
+            "//button[contains(@class, 'bg-red-600') and contains(text(), 'Save')]",
+            "//button[@type='button' and contains(text(), 'Save')]"
+        ]
+        
+        for selector in selectors:
+            try:
+                elements = driver.find_elements(By.XPATH, selector)
+                visible_elements = [el for el in elements if el.is_displayed()]
+                if visible_elements:
+                    save_button = visible_elements[0]
+                    break
+            except:
+                continue
+        
+        if save_button:
+            driver.execute_script("arguments[0].click();", save_button)
+            print("✓ Save & Continue button clicked - proceeding to next page")
+        else:
+            print("✗ Could not find Save & Continue button with any selector")
+    except Exception as e:
+        print("✗ Could not find Save & Continue button:", str(e))
+
 def main():
     """Main entry point."""
     # Initialize Chrome WebDriver
@@ -290,7 +432,19 @@ def main():
         # Fill the room details page
         fill_room_details_page(driver)
 
-        print("Room details page completed! Ready for next page instructions.")
+        # Wait a moment for page transition
+        time.sleep(3)
+
+        # Fill the locality details page
+        fill_locality_details_page(driver)
+
+        # Wait a moment for page transition
+        time.sleep(3)
+
+        # Fill the PG details page
+        fill_pg_details_page(driver)
+
+        print("PG details page completed! Ready for next page instructions.")
         input("Press Enter to close the browser...")
 
     except Exception as e:
