@@ -34,6 +34,13 @@ EXPECTED_DEPOSIT = "20000"
 # PG Details Configuration
 DESCRIPTION = "Student Friendly PG, with all the essential amenities and an affordable rent, combined with the best cuisines, from all parts of the world."
 
+# Amenities Configuration
+DIRECTIONS_TIP = "Come straight, from Top in Town supermarket, and take a left, when you see a bike repair shop."
+
+# Gallery Configuration
+IMAGE_PATH = "try.png"  # Path to the image file to upload
+VIDEO_PATH = "trial.MP4"  # Path to the video file to upload
+
 def wait_and_click(driver, by, locator, timeout=20):
     """Wait for an element to be clickable and then click it."""
     element = WebDriverWait(driver, timeout).until(EC.element_to_be_clickable((by, locator)))
@@ -407,8 +414,232 @@ def fill_pg_details_page(driver):
     except Exception as e:
         print("✗ Could not find Save & Continue button:", str(e))
 
+def fill_amenities_page(driver):
+    """Fill the amenities page - dropdowns, checkboxes, and directions."""
+    print("Starting to fill amenities page...")
+    
+    # Wait for page transition
+    time.sleep(3)
+    
+    # Handle all dropdowns - select first option for each
+    try:
+        # Close any stray popovers
+        driver.execute_script("document.body.click();")
+        time.sleep(0.3)
+        
+        # Find all visible combobox buttons on the page
+        comboboxes = WebDriverWait(driver, 10).until(
+            lambda d: [el for el in d.find_elements(By.XPATH, "//button[@role='combobox']") if el.is_displayed()]
+        )
+        
+        # We expect 3 dropdowns: Laundry, Room Cleaning, Warden Facility
+        dropdown_names = ["Laundry", "Room Cleaning", "Warden Facility"]
+        
+        for idx, cb in enumerate(comboboxes[:3]):
+            try:
+                driver.execute_script("arguments[0].scrollIntoView({block:'center'});", cb)
+                time.sleep(0.2)
+                driver.execute_script("arguments[0].click();", cb)
+                
+                # Wait for dropdown options to appear and select first option
+                first_option = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable((By.XPATH, "//div[@role='option'][1]"))
+                )
+                driver.execute_script("arguments[0].click();", first_option)
+                print(f"✓ {dropdown_names[idx]} selected (first option)")
+                time.sleep(0.2)
+            except Exception as inner_e:
+                print(f"⚠️  {dropdown_names[idx]} selection failed:", str(inner_e))
+                driver.execute_script("document.body.click();")
+                time.sleep(0.2)
+    except Exception as e:
+        print("✗ Could not process dropdown selections:", str(e))
+    
+    # Directions for clients textarea
+    try:
+        directions_textarea = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//textarea[contains(@placeholder, 'Take the road opposite')]"))
+        )
+        directions_textarea.clear()
+        directions_textarea.send_keys(DIRECTIONS_TIP)
+        print(f"✓ Directions filled: {DIRECTIONS_TIP[:50]}...")
+    except Exception as e:
+        print("✗ Could not fill Directions field:", str(e))
+    
+    # Select checkboxes: Mess, Cooking Allowed, Wifi
+    checkbox_ids = ["mess", "cookingAllowed", "wifi"]
+    checkbox_names = ["Mess", "Cooking Allowed", "Wifi"]
+    
+    for i, checkbox_id in enumerate(checkbox_ids):
+        try:
+            checkbox = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, f"//button[@id='{checkbox_id}']"))
+            )
+            driver.execute_script("arguments[0].click();", checkbox)
+            print(f"✓ {checkbox_names[i]} selected")
+        except Exception as e:
+            print(f"✗ Could not select {checkbox_names[i]}:", str(e))
+    
+    # Click Save & Continue button
+    try:
+        # Try multiple selectors for Save & Continue button
+        save_button = None
+        selectors = [
+            "//button[contains(text(), 'Save & Continue')]",
+            "//button[contains(text(), 'Save &amp; Continue')]",
+            "//button[contains(@class, 'bg-red-600') and contains(text(), 'Save')]",
+            "//button[@type='button' and contains(text(), 'Save')]"
+        ]
+        
+        for selector in selectors:
+            try:
+                elements = driver.find_elements(By.XPATH, selector)
+                visible_elements = [el for el in elements if el.is_displayed()]
+                if visible_elements:
+                    save_button = visible_elements[0]
+                    break
+            except:
+                continue
+        
+        if save_button:
+            driver.execute_script("arguments[0].click();", save_button)
+            print("✓ Save & Continue button clicked - proceeding to next page")
+        else:
+            print("✗ Could not find Save & Continue button with any selector")
+    except Exception as e:
+        print("✗ Could not find Save & Continue button:", str(e))
+
+def fill_gallery_page(driver):
+    """Skip gallery uploads and just click Save & Continue."""
+    print("Starting to fill gallery page...")
+    print("⚠️  Skipping image and video uploads - proceeding directly to Save & Continue")
+    
+    # Wait a moment for page to load
+    time.sleep(2)
+    
+    # Click Save & Continue button
+    try:
+        # Try multiple selectors for Save & Continue button
+        save_button = None
+        selectors = [
+            "//button[contains(text(), 'Save & Continue')]",
+            "//button[contains(text(), 'Save &amp; Continue')]",
+            "//button[contains(@class, 'bg-red-600') and contains(text(), 'Save')]",
+            "//button[@type='button' and contains(text(), 'Save')]"
+        ]
+        
+        for selector in selectors:
+            try:
+                elements = driver.find_elements(By.XPATH, selector)
+                visible_elements = [el for el in elements if el.is_displayed()]
+                if visible_elements:
+                    save_button = visible_elements[0]
+                    break
+            except:
+                continue
+        
+        if save_button:
+            driver.execute_script("arguments[0].click();", save_button)
+            print("✓ Save & Continue button clicked - proceeding to next page")
+        else:
+            print("✗ Could not find Save & Continue button with any selector")
+    except Exception as e:
+        print("✗ Could not find Save & Continue button:", str(e))
+
+def fill_schedule_and_submit(driver):
+    """Fill the schedule page and submit the property."""
+    print("Starting to fill schedule page...")
+    
+    # Wait for page transition
+    time.sleep(3)
+    
+    # Click Submit Property button
+    try:
+        submit_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Submit Property')]"))
+        )
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", submit_button)
+        time.sleep(0.5)
+        driver.execute_script("arguments[0].click();", submit_button)
+        print("✓ Submit Property button clicked - property submitted!")
+        
+        # Wait for submission to complete
+        time.sleep(3)
+        
+    except Exception as e:
+        print("✗ Could not find or click Submit Property button:", str(e))
+
+def start_new_post(driver):
+    """Navigate to post property page to start a new property posting."""
+    print("Starting new property posting...")
+    
+    try:
+        driver.get("https://homehni.in/post-property")
+        WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((By.XPATH, "//button[@role='combobox' and contains(., 'Select city')] | //button[contains(., 'Start Posting Your Ad For FREE')]"))
+        )
+        print("✓ Navigated to post property page - ready for next property")
+        time.sleep(2)
+    except Exception as e:
+        print("✗ Could not navigate to post property page:", str(e))
+
+def run_full_post_flow(driver, property_index):
+    """Run the complete property posting flow for one property."""
+    print(f"\n{'='*50}")
+    print(f"PG/HOSTEL PROPERTY {property_index} - Starting posting flow")
+    print(f"{'='*50}")
+    
+    try:
+        # Fill the first page form
+        fill_first_page(driver)
+        time.sleep(3)
+
+        # Fill the room type page
+        fill_room_type_page(driver)
+        time.sleep(3)
+
+        # Fill the room details page
+        fill_room_details_page(driver)
+        time.sleep(3)
+
+        # Fill the locality details page
+        fill_locality_details_page(driver)
+        time.sleep(3)
+
+        # Fill the PG details page
+        fill_pg_details_page(driver)
+        time.sleep(3)
+
+        # Fill the amenities page
+        fill_amenities_page(driver)
+        time.sleep(3)
+
+        # Fill the gallery page
+        fill_gallery_page(driver)
+        time.sleep(3)
+
+        # Fill the schedule page and submit
+        fill_schedule_and_submit(driver)
+        
+        print(f"✓ PG/Hostel Property {property_index} submitted successfully!")
+        return True
+        
+    except Exception as e:
+        print(f"✗ Error posting PG/Hostel property {property_index}: {str(e)}")
+        return False
+
 def main():
     """Main entry point."""
+    # Ask user for number of properties to post
+    try:
+        num_properties = int(input("How many PG/Hostel properties do you want to post? Enter a number: "))
+        if num_properties <= 0:
+            print("Please enter a positive number.")
+            return
+    except ValueError:
+        print("Please enter a valid number.")
+        return
+
     # Initialize Chrome WebDriver
     driver = webdriver.Chrome()
     driver.maximize_window()
@@ -417,34 +648,51 @@ def main():
         # Navigate to HomeHNI and wait for manual login
         login_and_wait(driver)
 
-        # Fill the first page form
-        fill_first_page(driver)
+        successful_posts = 0
+        failed_posts = 0
 
-        # Wait a moment for page transition
-        time.sleep(3)
+        # Post each property
+        for i in range(1, num_properties + 1):
+            try:
+                # Run the complete flow for one property
+                success = run_full_post_flow(driver, i)
+                
+                if success:
+                    successful_posts += 1
+                    print(f"✓ PG/Hostel Property {i} completed successfully!")
+                else:
+                    failed_posts += 1
+                    print(f"✗ PG/Hostel Property {i} failed!")
+                
+                # If not the last property, start a new post
+                if i < num_properties:
+                    print(f"\nStarting PG/Hostel property {i+1}...")
+                    start_new_post(driver)
+                    time.sleep(2)
+                    
+            except Exception as e:
+                print(f"✗ Error with PG/Hostel property {i}: {str(e)}")
+                failed_posts += 1
+                
+                # If not the last property, try to start a new post
+                if i < num_properties:
+                    try:
+                        start_new_post(driver)
+                        time.sleep(2)
+                    except:
+                        print("Could not start new post. Please check the browser manually.")
+                        break
 
-        # Fill the room type page
-        fill_room_type_page(driver)
+        # Final summary
+        print(f"\n{'='*60}")
+        print(f"PG/HOSTEL POSTING COMPLETE!")
+        print(f"{'='*60}")
+        print(f"Total properties requested: {num_properties}")
+        print(f"Successfully posted: {successful_posts}")
+        print(f"Failed posts: {failed_posts}")
+        print(f"Success rate: {(successful_posts/num_properties)*100:.1f}%")
+        print(f"{'='*60}")
 
-        # Wait a moment for page transition
-        time.sleep(3)
-
-        # Fill the room details page
-        fill_room_details_page(driver)
-
-        # Wait a moment for page transition
-        time.sleep(3)
-
-        # Fill the locality details page
-        fill_locality_details_page(driver)
-
-        # Wait a moment for page transition
-        time.sleep(3)
-
-        # Fill the PG details page
-        fill_pg_details_page(driver)
-
-        print("PG details page completed! Ready for next page instructions.")
         input("Press Enter to close the browser...")
 
     except Exception as e:
